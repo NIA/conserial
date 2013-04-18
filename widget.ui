@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Widget</class>
+ <widget class="QWidget" name="Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>499</width>
+    <height>393</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ConSerial - Serial Port management console</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>port.ico</normaloff>port.ico</iconset>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QPlainTextEdit" name="console"/>
+     <widget class="QWidget" name="">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPlainTextEdit" name="dataInput"/>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QPushButton" name="send">
+           <property name="text">
+            <string>Send</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="sendFile">
+           <property name="text">
+            <string>Send File</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
