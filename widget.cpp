@@ -5,10 +5,20 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QTextStream>
+#include <QDateTime>
+#include <qmath.h>
 
 namespace {
     const QString DEFAULT_PORT = "COM9";
     const QByteArray DATA_PREFIX(5, '\xF0');
+    const unsigned CHANNELS_NUM = 3;
+
+    // AUTO MODE generation params
+    const int    DATA_SIZE = 200;
+    const double PERIOD_MS = 1000;
+    const double OMEGA1 = 3*M_PI/1000;
+    const double OMEGA2 = OMEGA1/15;
+    const double AMP = 9999999;
 }
 
 Widget::Widget(QWidget *parent) :
@@ -48,7 +58,7 @@ void Widget::openPort(QString portName) {
 
     connect(ui->send, &QPushButton::clicked, [=](){
         QByteArray data = ui->dataInput->toPlainText().toLocal8Bit();
-        send(data);
+        send(QByteArray::fromHex(data));
     });
 
     connect(ui->sendFile, &QPushButton::clicked, [=](){
@@ -69,23 +79,55 @@ void Widget::openPort(QString portName) {
                         values << val;
                     }
                 }
-
-                // Prepare data packet
-                QByteArray data = DATA_PREFIX;
-                foreach(int val, values) {
-                    data.append( (char*)&val, sizeof(val));
-                }
-                // Send it
-                send(data.toHex());
+                sendValues(values);
             }
+        }
+    });
+
+    connect(&autoTimer, &QTimer::timeout, this, &Widget::sendGenerated);
+    connect(ui->autoMode, &QPushButton::clicked, [=](){
+        if (autoTimer.isActive()) {
+            autoTimer.stop();
+        } else {
+            autoTimer.start(PERIOD_MS);
         }
     });
 }
 
-void Widget::send(QByteArray data) {
-    write("<< " + data);
-    port->write(QByteArray::fromHex(data));
+void Widget::send(QByteArray data, bool print) {
+    if (print) {
+        write("<< " + data.toHex());
+    }
+    port->write(data);
     port->flush();
+}
+
+void Widget::sendValues(QVector<int> values, bool print) {
+    // Prepare data packet
+    QByteArray data = DATA_PREFIX;
+    foreach(int val, values) {
+        for(unsigned ch = 0; ch < CHANNELS_NUM; ++ch) {
+            // By now just repeats each data point CHANNELS_NUM times (the same data for all channelds)
+            data.append( (char*)&val, sizeof(val));
+        }
+    }
+    // Send it
+    send(data, print);
+}
+
+void Widget::sendGenerated() {
+    QVector<int> values(DATA_SIZE);
+    double t0 = QDateTime::currentMSecsSinceEpoch() - PERIOD_MS;
+    double dt = PERIOD_MS / double(DATA_SIZE);
+    double t = t0;
+    for(int i = 0; i < DATA_SIZE; ++i) {
+        values[i] = AMP*qSin(OMEGA1*t)*qCos(OMEGA2*t);
+        t += dt;
+    }
+    // send, but not print
+    sendValues(values, false);
+    // print stats instead
+    write(QString("<< ... (sent %1 items with t0 = %2)").arg(DATA_SIZE).arg(t0,0,'f',0));
 }
 
 void Widget::write(QString text) {
@@ -100,5 +142,7 @@ void Widget::write(QString text) {
 
 Widget::~Widget()
 {
+    autoTimer.disconnect();
+    autoTimer.stop();
     delete ui;
 }

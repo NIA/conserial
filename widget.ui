@@ -24,7 +24,7 @@
       <enum>Qt::Vertical</enum>
      </property>
      <widget class="QPlainTextEdit" name="console"/>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QPlainTextEdit" name="dataInput"/>
@@ -42,6 +42,16 @@
           <widget class="QPushButton" name="sendFile">
            <property name="text">
             <string>Send File</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="autoMode">
+           <property name="text">
+            <string>AUTO MODE</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
