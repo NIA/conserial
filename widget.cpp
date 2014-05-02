@@ -13,6 +13,10 @@ namespace {
     const QByteArray DATA_PREFIX(5, '\xF0');
     const unsigned CHANNELS_NUM = 3;
 
+    // We can't write to QIODevice more than 8192 bytes at once (buffer size probably)
+    // So do not send packets more that, say, half of it (just to be safe)
+    const int MAX_SIZE = 4096;
+
     // AUTO MODE generation params
     const int    DATA_SIZE = 200;
     const double PERIOD_MS = 1000;
@@ -95,11 +99,22 @@ void Widget::openPort(QString portName) {
 }
 
 void Widget::send(QByteArray data, bool print) {
+    if (data.size() <= MAX_SIZE) {
+        port->write(data);
+    } else {
+        // Send portions of MAX_SIZE
+        for (int start = 0; start < data.size(); start += MAX_SIZE) {
+            QByteArray part = data.mid(start, MAX_SIZE);
+            port->write(part);
+            write(QString("[part: %1 bytes starting from %2").arg(part.size()).arg(start));
+        }
+    }
+    port->flush();
     if (print) {
         write("<< " + data.toHex());
+    } else {
+        write(QString("<< total %1 bytes sent").arg(data.size()));
     }
-    port->write(data);
-    port->flush();
 }
 
 void Widget::sendValues(QVector<int> values, bool print) {
@@ -119,15 +134,14 @@ void Widget::sendGenerated() {
     QVector<int> values(DATA_SIZE);
     double t0 = QDateTime::currentMSecsSinceEpoch() - PERIOD_MS;
     double dt = PERIOD_MS / double(DATA_SIZE);
-    double t = t0;
     for(int i = 0; i < DATA_SIZE; ++i) {
-        values[i] = AMP*qSin(OMEGA1*t)*qCos(OMEGA2*t);
-        t += dt;
+        double t = t0 + i*dt;
+        values[i] = qSin(OMEGA1*t)*qCos(OMEGA2*t)*AMP;
     }
     // send, but not print
     sendValues(values, false);
     // print stats instead
-    write(QString("<< ... (sent %1 items with t0 = %2)").arg(DATA_SIZE).arg(t0,0,'f',0));
+    write(QString("<< (sent %1 items with t0 = %2)").arg(DATA_SIZE).arg(t0,0,'f',0));
 }
 
 void Widget::write(QString text) {
