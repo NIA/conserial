@@ -33,6 +33,8 @@ Widget::Widget(QWidget *parent) :
     ui->splitter->setStretchFactor(0, 5);
     ui->splitter->setStretchFactor(1, 1);
 
+    ui->dataInput->setPlainText("03");
+
     write(tr("Asking for port name"));
     bool ok;
     QString portName =
@@ -103,10 +105,10 @@ void Widget::send(QByteArray data, bool print) {
         port->write(data);
     } else {
         // Send portions of MAX_SIZE
-        for (int start = 0; start < data.size(); start += MAX_SIZE) {
+        for (int start = 0, partNo = 1; start < data.size(); start += MAX_SIZE, ++partNo) {
             QByteArray part = data.mid(start, MAX_SIZE);
             port->write(part);
-            write(QString("[part: %1 bytes starting from %2").arg(part.size()).arg(start));
+            write(QString("[part %3: %1 bytes starting from %2]").arg(part.size()).arg(start).arg(partNo));
         }
     }
     port->flush();
