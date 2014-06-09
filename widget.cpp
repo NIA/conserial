@@ -134,7 +134,8 @@ void Widget::sendValues(QVector<int> values, bool print) {
 
 void Widget::sendGenerated() {
     QVector<int> values(DATA_SIZE);
-    double t0 = QDateTime::currentMSecsSinceEpoch() - PERIOD_MS;
+    // round to seconds
+    double t0 = double(QDateTime::currentMSecsSinceEpoch()/1000)*1000 - PERIOD_MS;
     double dt = PERIOD_MS / double(DATA_SIZE);
     for(int i = 0; i < DATA_SIZE; ++i) {
         double t = t0 + i*dt;
